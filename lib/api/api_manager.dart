@@ -8,6 +8,7 @@ import 'package:news_app/api/model/source_response/source_response.dart';
 //https://newsapi.org/v2/top-headlines/sources?apiKey=3ace439389cd4bf9816a765ac62b92b0
 
 class ApiManager {
+  static const int pageSize = 10;
   static Future<SourceResponse> getSources(
     String categoryId,
     String language,
@@ -37,7 +38,7 @@ class ApiManager {
         'apiKey': ApiConstant.apiKey,
         'sources': sourceId,
         'language': language,
-        'pageSize': '10',
+        'pageSize': pageSize.toString(),
         'page': page.toString(),
       });
 
@@ -55,7 +56,7 @@ class ApiManager {
       Uri url = Uri.https(ApiConstant.baseUrl, ApiEndpoint.newsApi, {
         'apiKey': ApiConstant.apiKey,
         'q': query,
-        'pageSize': '10',
+        'pageSize': pageSize.toString(),
         'page': page.toString(),
       });
       var response = await http.get(url);
