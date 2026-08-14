@@ -1,14 +1,16 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:news_app/api/api_manager.dart';
 import 'package:news_app/api/model/news_response/article.dart';
+import 'package:news_app/api/model/news_response/news_response.dart';
 import 'package:news_app/ui/home/category_details/news/news_details/news_details.dart';
 import 'package:news_app/ui/home/category_details/news/widgets/news_card_item.dart';
-import 'package:provider/provider.dart';
-import 'package:news_app/providers/news_paging_provider.dart';
+import 'package:news_app/ui/home/category_details/news/widgets/page_item.dart';
 import 'package:news_app/utils/app_colors.dart';
 import 'package:news_app/widgets/main_error.dart';
+import 'package:news_app/widgets/main_waiting.dart';
+// unused imports removed
 
 class SearchNews extends StatefulWidget {
   final String searchText;
@@ -20,50 +22,104 @@ class SearchNews extends StatefulWidget {
 }
 
 class _SearchNewsState extends State<SearchNews> {
-  @override
-  void didUpdateWidget(covariant SearchNews oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.searchText != widget.searchText) {
-      final provider = Provider.of<NewsPagingProvider>(context, listen: false);
-      final controller = provider.controllerForSearch(widget.searchText);
-      controller.refresh();
-    }
-  }
+  int currentPage = 1;
 
   @override
   Widget build(BuildContext context) {
     if (widget.searchText.isEmpty) return SizedBox();
-    final provider = Provider.of<NewsPagingProvider>(context, listen: false);
-    final controller = provider.controllerForSearch(widget.searchText);
-    return Expanded(
-      child: PagedListView<int, Article>.separated(
-        pagingController: controller,
-        separatorBuilder: (context, index) => SizedBox(height: 16.h),
-        builderDelegate: PagedChildBuilderDelegate<Article>(
-          itemBuilder: (context, item, index) => InkWell(
-            overlayColor: WidgetStatePropertyAll(AppColors.transparentColor),
-            onTap: () => showBottomSheet(context, item),
-            child: NewsCardItem(
-              image: item.urlToImage ?? '',
-              title: item.title ?? '',
-              author: item.author ?? 'Unknown',
-              publishedAt: item.publishedAt ?? '',
-            ),
-          ),
-          firstPageErrorIndicatorBuilder: (context) =>
-              MainError(onTap: () => controller.refresh()),
-          noItemsFoundIndicatorBuilder: (context) => Center(
-            child: Text(
-              'no_news_matching_found'.tr(),
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-          ),
-          newPageErrorIndicatorBuilder: (context) => ElevatedButton(
-            onPressed: () => controller.retryLastFailedRequest(),
-            child: Text('retry'.tr()),
-          ),
-        ),
-      ),
+    return FutureBuilder<NewsResponse>(
+      future: ApiManager.getNewsBySearch(widget.searchText, currentPage),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Expanded(child: MainWaiting());
+        } else if (snapshot.hasError) {
+          return MainError(
+            onTap: () {
+              setState(() {});
+            },
+          );
+        }
+        var newsList = snapshot.data?.articles ?? [];
+        return newsList.isEmpty
+            ? Expanded(
+                child: Center(
+                  child: Text(
+                    'no_news_matching_found'.tr(),
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ),
+              )
+            : Expanded(
+                child: ListView.separated(
+                  separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                  itemCount: newsList.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == newsList.length) {
+                      return Row(
+                        spacing: 6.w,
+                        mainAxisAlignment: .center,
+                        children: [
+                          PageItem(
+                            isSelected: currentPage == 1,
+                            page: 1,
+                            onTap: () {
+                              currentPage = 1;
+                              setState(() {});
+                            },
+                          ),
+                          PageItem(
+                            isSelected: currentPage == 2,
+                            page: 2,
+                            onTap: () {
+                              currentPage = 2;
+                              setState(() {});
+                            },
+                          ),
+                          PageItem(
+                            isSelected: currentPage == 3,
+                            page: 3,
+                            onTap: () {
+                              currentPage = 3;
+                              setState(() {});
+                            },
+                          ),
+                          PageItem(
+                            isSelected: currentPage == 4,
+                            page: 4,
+                            onTap: () {
+                              currentPage = 4;
+                              setState(() {});
+                            },
+                          ),
+                          PageItem(
+                            isSelected: currentPage == 5,
+                            page: 5,
+                            onTap: () {
+                              currentPage = 5;
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      );
+                    }
+                    return InkWell(
+                      overlayColor: WidgetStatePropertyAll(
+                        AppColors.transparentColor,
+                      ),
+                      onTap: () {
+                        showBottomSheet(context, newsList[index]);
+                      },
+                      child: NewsCardItem(
+                        image: newsList[index].urlToImage ?? '',
+                        title: newsList[index].title ?? '',
+                        author: newsList[index].author ?? 'Unknown',
+                        publishedAt: newsList[index].publishedAt ?? '',
+                      ),
+                    );
+                  },
+                ),
+              );
+      },
     );
   }
 
@@ -75,3 +131,4 @@ class _SearchNewsState extends State<SearchNews> {
     );
   }
 }
+

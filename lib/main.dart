@@ -6,7 +6,6 @@ import 'package:news_app/ui/home/home_view.dart';
 import 'package:news_app/utils/app_routes.dart';
 import 'package:news_app/utils/app_theme.dart';
 import 'package:provider/provider.dart';
-import 'package:news_app/providers/news_paging_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,11 +15,8 @@ Future<void> main() async {
       supportedLocales: [Locale('en'), Locale('ar')],
       path: 'assets/translations',
       fallbackLocale: Locale('en'),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (context) => AppThemeProvider()),
-          ChangeNotifierProvider(create: (context) => NewsPagingProvider()),
-        ],
+      child: ChangeNotifierProvider(
+        create: (context) => AppThemeProvider(),
         child: const NewsApp(),
       ),
     ),
